@@ -16,7 +16,6 @@ namespace TESTE
     {
         Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         byte[] data = new byte[1024];
-        EndPoint mandar = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8000);
         EndPoint Remote = (EndPoint)new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8000);
         char[,] poisicoes = new char[10, 10];
         char[] Colunas =  { 'A', 'B', 'C', 'D', 'E', 'F','G', 'H', 'I', 'J' };
@@ -274,14 +273,16 @@ namespace TESTE
         {
             Atacar();
             int cntL;
-            string input = txtColunaI.Text+txtLinhaI.Text, stringData;
+            string input = txtColunaI.Text.ToUpper()+txtLinhaI.Text, stringData;
 
             byte[] ola = new byte[1024];
             Data data = new Data();
             data.strMessage = input;
+            data.cmdCommand = Data.Command.Atacar;
+            data.strName = txtNome.Text;
             ola = data.ToByte();
-            server.BeginSendTo(ola, 0, ola.Length, SocketFlags.None, mandar,
-                                    new AsyncCallback(OnSend), mandar);
+            server.BeginSendTo(ola, 0, ola.Length, SocketFlags.None, Remote,
+                                    new AsyncCallback(OnSend), Remote);
             lblPosiçao.Text = "Defender";
             
             
@@ -321,26 +322,35 @@ namespace TESTE
 
         private void btnFeito_Click(object sender, EventArgs e)
         {
-            string input = "Jogar", stringData;
-          
-            server.SendTo(Encoding.ASCII.GetBytes(input), Remote);
-            if (lblPosiçao.Enabled == false)
+            if (txtNome.Text == "")
             {
-                lblPosiçao.Enabled = true;
+                MessageBox.Show("Insira o seu nome", "Nome", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            foreach (Label espaco in groupBox1.Controls)
+            else
             {
-                espaco.ForeColor = Color.Gray;
+                string input = "Jogar", stringData;
+
+                server = new Socket(AddressFamily.InterNetwork, SocketType.Dgram,
+                    ProtocolType.Udp);
+
+                if (lblPosiçao.Enabled == false)
+                {
+                    lblPosiçao.Enabled = true;
+                }
+                foreach (Label espaco in groupBox1.Controls)
+                {
+                    espaco.ForeColor = Color.Gray;
+                }
+                Data client = new Data();
+                client.strName = txtNome.Text;
+                client.cmdCommand = Data.Command.Login;
+                byte[] ola = client.ToByte();
+                server.BeginSendTo(ola, 0, ola.Length, SocketFlags.None, Remote,
+                                        new AsyncCallback(OnSend), null);
+                
+
+                btnFeito.Text = "Fim";
             }
-            byte[] ola = new byte[1024];
-            Data data = new Data();
-            data.strMessage = input;
-            ola = data.ToByte();
-            server.BeginReceiveFrom(ola, 0, ola.Length, SocketFlags.None, ref mandar,
-                                    new AsyncCallback(OnSend), mandar);
-            
-            btnFeito.Text = "Fim";
-            
         }
 
         public void OnSend(IAsyncResult ar)
@@ -353,30 +363,24 @@ namespace TESTE
             {
                 MessageBox.Show(ex.Message, "Servidor", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }   
+        }
         private void Atacado(string cord)
         {
             int cntL;
-            string recv = cord;
-            for (cntL = 0; ; cntL++)
+            string recv = cord; 
+            if (poisicoes[recv[0], recv[1]] == 'O')
             {
-                if (recv[0] == Colunas[cntL])
-                    break;
+                byte[] ola;
+                Data data = new Data();
+                data.strMessage = "Acertou!";
+                data.strName = txtNome.Text;
+                data.cmdCommand = Data.Command.Atacar;
+                ola = data.ToByte();
+                
+                server.BeginSendTo(ola, 0, ola.Length, SocketFlags.None, Remote,
+                                        new AsyncCallback(OnSend), null);
             }
-            foreach (Control espaco in groupBox1.Controls)
-            {
-                if (espaco.Name == "lbl" + Colunas[cntL] + recv[1])
-                {
-                    if (poisicoes[cntL, Convert.ToInt32(recv[1])] == 'O')
-                    {
-                        espaco.ForeColor = Color.Red;
-                    }
-                    else
-                    {
-                        espaco.Visible = true;
-                    }
-                }
-            }
+
         }
         private void OnReceive(IAsyncResult ar)
         {
@@ -386,10 +390,26 @@ namespace TESTE
                 EndPoint epSender = (EndPoint)ipeSender;
 
                 server.EndReceiveFrom(ar, ref epSender);
-
                 //Transformar o array de bytes recebido do utilizador num objecto de dados
                 Data msgReceived = new Data(data);
-                Atacado(msgReceived.strMessage);
+                if(msgReceived.cmdCommand == Data.Command.Atacar)
+                {
+                    if (msgReceived.strName == txtNome.Text && msgReceived.strMessage == "Acertou!")
+                    {
+                        foreach (Control control in groupBox1.Controls)
+                        {
+                            if (control.Name == "lbl" + msgReceived.strMessage)
+                            {
+                                if (control.Enabled == true)
+                                    control.ForeColor = Color.Red;
+                                else
+                                    control.ForeColor = Color.Black;
+                            }
+                        }
+                    }
+                    else
+                        Atacado(msgReceived.strMessage);
+                }
             }
             catch
             {
@@ -405,7 +425,19 @@ namespace TESTE
             }
 
         }
-            }
+
+        private void lblNome_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            byte[] ola = new byte[1024];
+            server.BeginReceiveFrom(ola, 0, ola.Length, SocketFlags.None, ref Remote,
+                                        new AsyncCallback(OnReceive), Remote);
+        }
+    }
 
     class Data
     {
@@ -446,7 +478,8 @@ namespace TESTE
             Logout,     //Saída/desconectar
             Message,    //Envio de mensagem para todos os clientes
             List,       //Obter lista dos utilizadores
-            Null        //auxiliar
+            Null,        //auxiliar
+            Atacar
         }
         //Converter a estrutura de dados num array de bytes
         public byte[] ToByte()

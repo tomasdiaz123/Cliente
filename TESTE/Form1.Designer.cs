@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.lblJ3I = new System.Windows.Forms.Label();
             this.lblJ2I = new System.Windows.Forms.Label();
@@ -245,6 +246,9 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnFeito = new System.Windows.Forms.Button();
             this.lblPosiçao = new System.Windows.Forms.Label();
+            this.txtNome = new System.Windows.Forms.TextBox();
+            this.lblNome = new System.Windows.Forms.Label();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -3402,11 +3406,36 @@
             this.lblPosiçao.TabIndex = 430;
             this.lblPosiçao.Text = "Ataque";
             // 
+            // txtNome
+            // 
+            this.txtNome.Location = new System.Drawing.Point(363, 502);
+            this.txtNome.Name = "txtNome";
+            this.txtNome.Size = new System.Drawing.Size(100, 20);
+            this.txtNome.TabIndex = 431;
+            // 
+            // lblNome
+            // 
+            this.lblNome.AutoSize = true;
+            this.lblNome.Location = new System.Drawing.Point(319, 505);
+            this.lblNome.Name = "lblNome";
+            this.lblNome.Size = new System.Drawing.Size(38, 13);
+            this.lblNome.TabIndex = 432;
+            this.lblNome.Text = "Nome:";
+            this.lblNome.Click += new System.EventHandler(this.lblNome_Click);
+            // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Interval = 1000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1023, 577);
+            this.Controls.Add(this.lblNome);
+            this.Controls.Add(this.txtNome);
             this.Controls.Add(this.lblPosiçao);
             this.Controls.Add(this.btnFeito);
             this.Controls.Add(this.groupBox1);
@@ -3651,6 +3680,9 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button btnFeito;
         private System.Windows.Forms.Label lblPosiçao;
+        private System.Windows.Forms.TextBox txtNome;
+        private System.Windows.Forms.Label lblNome;
+        private System.Windows.Forms.Timer timer1;
     }
 }
 
